@@ -733,6 +733,22 @@ pub(super) fn monitor_index_for_handle(
     displays.iter().position(|display| display.handle == handle)
 }
 
+/// Resolve a saved monitor: the device name wins, then the saved index. A
+/// named monitor that is absent (e.g. not enumerated yet during boot) yields
+/// None so callers fall back without the index silently picking another one.
+pub(super) fn resolve_saved_monitor(
+    displays: &[native_interop::DisplayMonitor],
+    index: usize,
+    device: Option<&str>,
+) -> Option<usize> {
+    match device {
+        Some(device) => displays.iter().position(|display| {
+            native_interop::monitor_device_name(display.handle).as_deref() == Some(device)
+        }),
+        None => (index < displays.len()).then_some(index),
+    }
+}
+
 pub(super) fn override_primary_placement(
     theme: &mut ThemeDocument,
     placement: theme_engine::Placement,
